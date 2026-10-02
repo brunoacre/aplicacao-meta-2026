@@ -20,8 +20,7 @@ def _nova_atividade(tipo, titulo="Palestra de abertura"):
     dia = date(2026, 10, 20)
     return Atividade(
         tipo_evento=tipo, titulo=titulo, modalidade="palestra", data=dia,
-        hora_inicio=time(14, 0), hora_fim=time(15, 0),
-        fecha_em=fechamento_padrao(dia),
+        hora_inicio=time(14, 0), fecha_em=fechamento_padrao(dia),
     )
 
 

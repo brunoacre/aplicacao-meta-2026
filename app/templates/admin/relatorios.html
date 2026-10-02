@@ -12,8 +12,9 @@
 <section class="mb-5">
   <h2 class="h5">Consolidado por curso/turma</h2>
   <p class="text-body-secondary">
-    Planilha com uma aba por curso/turma e uma linha por aluno: matrícula, nome, e-mail,
-    quantidade de atividades e uma coluna por atividade, marcada com "X" quando houve presença.
+    Planilha com uma aba por curso/turma e a lista dos alunos com presença: nome, matrícula,
+    evento, atividades de que participou e quantidade de atividades. Sem filtro, o aluno tem
+    uma linha para cada evento.
   </p>
   <form method="get" action="{{ url_for('admin.relatorio_consolidado') }}" class="row g-2 align-items-end">
     <div class="col-12 col-md-5">

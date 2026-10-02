@@ -1,6 +1,6 @@
 <div class="info-atividade">
   <div class="text-body-secondary small">{{ atividade.tipo_evento.nome }}</div>
   <h1 class="h4 my-1">{{ atividade.titulo }}</h1>
-  <div>{{ atividade.data|data }}, das {{ atividade.hora_inicio|hora_h }} às {{ atividade.hora_fim|hora_h }}</div>
+  <div>{{ atividade.data|data }}, às {{ atividade.hora_inicio|hora_h }}</div>
   {% if atividade.local %}<div>Local: {{ atividade.local }}</div>{% endif %}
 </div>

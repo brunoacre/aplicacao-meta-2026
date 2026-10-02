@@ -53,7 +53,8 @@ dependências que exijam configuração especial no servidor.
   lista do formulário do aluno. Campos: nome, ativo.
 - **RF04 – Atividades**: cadastrar, editar, listar e excluir. Campos: tipo de evento,
   título, modalidade (palestra, apresentação de trabalho, minicurso, outra), data,
-  hora de início, hora de término, local, pessoas envolvidas (texto livre).
+  hora de início, local, pessoas envolvidas (texto livre). Não há hora de término (A3);
+  a hora de início é apenas informativa e serve para ordenar as listagens.
   - Listagem com filtros por tipo de evento, data e modalidade.
   - Atividade que já possui respostas não pode ser excluída, apenas editada.
 - **RF05 – Prorrogação de prazo**: na edição da atividade, o administrador pode alterar
@@ -65,15 +66,19 @@ dependências que exijam configuração especial no servidor.
     apenas das linhas válidas;
   - tipo de evento inexistente é criado automaticamente na importação.
 - **RF07 – QR Code individual**: baixar a imagem PNG do QR Code de uma atividade.
-- **RF08 – Folha de QR Codes em PDF**: gerar um PDF com as atividades filtradas
-  (ex.: todas de um evento), uma por página, contendo nome do evento, título da
-  atividade, data, horário, local, pessoas envolvidas e o QR Code em tamanho grande.
+- **RF08 – Folha de QR Codes em PDF** (A1): gerar um PDF com as atividades filtradas
+  (ex.: todas de um evento), uma atividade por página A4. Cada página traz, de cima
+  para baixo: nome do evento (ex.: "35ª META 2026"), título da atividade (ex.:
+  "Palestra XXXXX"), data da atividade e, abaixo, o QR Code em tamanho grande. Nada
+  mais é impresso (sem horário, local, envolvidos, instrução ou link).
 - **RF09 – Relatório de presença por atividade** (exportado em XLSX): nome, matrícula,
   curso/turma, e-mail, descrição e data/hora do envio.
-- **RF10 – Relatório consolidado por curso/turma** (exportado em XLSX): com filtro
-  opcional por tipo de evento; uma aba por curso/turma, uma linha por aluno com
-  matrícula, nome, e-mail, quantidade de atividades com presença e uma coluna por
-  atividade (marcada com "X" quando o aluno esteve presente).
+- **RF10 – Relatório consolidado por curso/turma** (exportado em XLSX, A2): com filtro
+  opcional por tipo de evento; uma aba por curso/turma com a lista de todos os alunos
+  que registraram presença, em ordem alfabética de nome. Colunas: nome, matrícula,
+  evento, atividades (texto único com as atividades em ordem de data, no formato
+  "DD/MM/AAAA – Título", separadas por "; ") e quantidade de atividades. Uma linha
+  por aluno e evento: a quantidade conta só as atividades daquele evento.
 - **RF11 – Pesquisa por aluno** (tela, sem exportação): busca por nome ou matrícula;
   exibe as atividades em que o aluno registrou presença, com data e tipo de evento.
 - **RF12 – Visualização de respostas**: o administrador pode ver as respostas de cada
@@ -82,7 +87,7 @@ dependências que exijam configuração especial no servidor.
 ### Área pública (aluno)
 
 - **RF13 – Formulário de presença** em `/presenca/<token>`, exibindo tipo de evento,
-  título, data, horário e local da atividade. Campos, todos obrigatórios:
+  título, data, hora de início e local da atividade. Campos, todos obrigatórios:
   - nome completo;
   - matrícula;
   - curso/turma (lista com os itens ativos do RF03);
@@ -91,11 +96,13 @@ dependências que exijam configuração especial no servidor.
 - **RF14 – Confirmação** após o envio, com mensagem de sucesso e resumo do que foi
   registrado.
 - **RF15 – Mensagens de indisponibilidade**: "Formulário ainda não aberto" (antes do
-  início, informando quando abre) ou "Prazo encerrado" (após o fechamento).
+  dia da atividade, informando a data em que abre) ou "Prazo encerrado" (após o
+  fechamento).
 
 ## 4. Regras de negócio
 
-- **RN01** – O formulário abre na data e hora de início da atividade.
+- **RN01** – O formulário abre à 00h00 da data da atividade (A3), independentemente
+  da hora de início. O "fecha em" deve ser posterior a esse momento.
 - **RN02** – Por padrão, o formulário fecha às 23h59 do dia da atividade. O campo
   "fecha em" é preenchido automaticamente no cadastro e na importação e pode ser
   alterado pelo administrador (RF05).
@@ -121,7 +128,7 @@ Administrador: id, nome, email (único), senha_hash, ativo
 TipoEvento:    id, nome, ativo
 CursoTurma:    id, nome, ativo
 Atividade:     id, tipo_evento_id, titulo, modalidade, data, hora_inicio,
-               hora_fim, local, envolvidos, token (único), fecha_em
+               local, envolvidos, token (único), fecha_em
 Resposta:      id, atividade_id, nome, matricula, curso_turma_id, email,
                descricao, enviado_em, ip
                restrição única: (atividade_id, matricula)
@@ -132,16 +139,16 @@ Resposta:      id, atividade_id, nome, matricula, curso_turma_id, email,
 Primeira linha com os cabeçalhos exatamente como abaixo; uma atividade por linha.
 
 ```
-tipo_evento | atividade | modalidade | data       | hora_inicio | hora_fim | local   | envolvidos
-META        | Ecoara... | apresentacao | 20/10/2026 | 14:00       | 14:20    | Sala 12 | Fulano, Beltrana
+tipo_evento | atividade | modalidade   | data       | hora_inicio | local   | envolvidos
+META        | Ecoara... | apresentacao | 20/10/2026 | 14:00       | Sala 12 | Fulano, Beltrana
 ```
 
 - `modalidade`: palestra, apresentacao, minicurso ou outra (sem diferenciar maiúsculas
   e acentos).
 - `data`: DD/MM/AAAA ou célula de data do Excel.
-- `hora_inicio` e `hora_fim`: HH:MM ou célula de hora do Excel; `hora_fim` deve ser
-  posterior a `hora_inicio`.
+- `hora_inicio`: HH:MM ou célula de hora do Excel.
 - `local` e `envolvidos` podem ficar em branco; os demais são obrigatórios.
+- Planilhas antigas com a coluna `hora_fim` continuam aceitas: a coluna é ignorada (A3).
 
 ## 7. Layout e identidade visual
 
@@ -321,7 +328,7 @@ h1, h2, h3 { color: var(--cor-azul); font-weight: 600; }
 
 - Coluna única centralizada, com largura máxima de 640px; no celular ocupa a tela toda.
 - Ordem no formulário: bloco de informações da atividade (tipo de evento, título, data,
-  horário e local), aviso de prazo, campos, contador de caracteres sob a descrição,
+  hora de início e local), aviso de prazo, campos, contador de caracteres sob a descrição,
   botão "Registrar presença" com largura total no celular.
 - Aviso de privacidade (LGPD) em texto pequeno cinza, logo acima do botão.
 - Páginas de confirmação, "ainda não aberto" e "prazo encerrado" seguem o mesmo
@@ -381,3 +388,29 @@ h1, h2, h3 { color: var(--cor-azul); font-weight: 600; }
 5. Importação de planilha com pré-visualização.
 6. Relatórios e pesquisa por aluno.
 7. README e ajustes para o PythonAnywhere.
+8. Alterações após a implantação (seção 11).
+
+## 11. Alterações após a implantação
+
+Pedidas depois da primeira implantação. As seções acima já estão atualizadas; esta
+lista registra o que mudou em relação à versão implantada.
+
+- **A1 – PDF de QR Codes (RF08)**: uma atividade por página A4 com nome do evento,
+  título da atividade, data e o QR Code abaixo. Saem da página o horário, o local, os
+  envolvidos, a instrução de leitura e o link.
+- **A2 – Consolidado por curso/turma (RF10)**: em vez de uma coluna por atividade
+  marcada com "X", cada aba (uma por curso/turma) lista os alunos com nome, matrícula,
+  evento, atividades em uma única coluna de texto concatenado e quantidade de
+  atividades. Sem filtro de evento, o aluno tem uma linha para cada evento em que
+  registrou presença. O e-mail sai deste relatório (continua no RF09). A aba "Resumo"
+  permanece.
+- **A3 – Fim da hora de término**:
+  - o campo `hora_fim` sai do cadastro, da edição, da listagem, do formulário público,
+    do PDF, da planilha modelo e da importação;
+  - o formulário passa a abrir à 00h00 da data da atividade (RN01); o fechamento
+    padrão continua às 23h59 do mesmo dia (RN02);
+  - a importação aceita e ignora a coluna `hora_fim` em planilhas antigas;
+  - o banco em produção já tem a coluna `hora_fim` (obrigatória). Um comando
+    `flask --app wsgi atualizar-banco` remove a coluna (`ALTER TABLE ... DROP
+    COLUMN`); é idempotente e deve ser rodado após o `git pull`, depois de uma cópia
+    de segurança do banco. O README documenta esse passo.

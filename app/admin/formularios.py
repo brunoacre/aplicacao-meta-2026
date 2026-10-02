@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 
 from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import (
@@ -56,8 +56,6 @@ class AtividadeForm(FormularioBase):
     data = DateField("Data", validators=[DataRequired("Informe a data.")])
     hora_inicio = TimeField(
         "Hora de início", validators=[DataRequired("Informe a hora de início.")])
-    hora_fim = TimeField(
-        "Hora de término", validators=[DataRequired("Informe a hora de término.")])
     local = StringField("Local", validators=[Optional(), Length(max=120)])
     envolvidos = TextAreaField("Pessoas envolvidas", validators=[Optional()])
     fecha_em = DateTimeLocalField(
@@ -65,16 +63,12 @@ class AtividadeForm(FormularioBase):
         description="Sugestão: 23h59 do dia da atividade. Pode ser alterado para "
                     "prorrogar o prazo.")
 
-    def validate_hora_fim(self, campo):
-        if self.hora_inicio.data and campo.data and campo.data <= self.hora_inicio.data:
-            raise ValidationError("A hora de término deve ser posterior à de início.")
-
     def validate_fecha_em(self, campo):
-        if campo.data and self.data.data and self.hora_inicio.data:
-            inicio = datetime.combine(self.data.data, self.hora_inicio.data)
-            if campo.data < inicio:
+        # RN01: o formulário abre à 00h00 da data da atividade.
+        if campo.data and self.data.data:
+            if campo.data <= datetime.combine(self.data.data, time.min):
                 raise ValidationError(
-                    "O fechamento não pode ser anterior ao início da atividade.")
+                    "O fechamento deve ser depois do início do dia da atividade.")
 
 
 class ImportarPlanilhaForm(FormularioBase):

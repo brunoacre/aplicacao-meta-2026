@@ -11,7 +11,7 @@
   {% include "publico/_info_atividade.html" %}
   <h2 class="h5">{{ titulos[situacao] }}</h2>
   {% if situacao == "nao_aberto" %}
-    <p>O formulário de presença abre em {{ abre_em|data }} às {{ abre_em|hora_h }}.</p>
+    <p>O formulário de presença abre em {{ abre_em|data }}, no dia da atividade.</p>
   {% elif situacao == "encerrado" %}
     <p>O prazo para registrar presença nesta atividade terminou em
        {{ atividade.fecha_em|data }} às {{ atividade.fecha_em|hora_h }}.</p>

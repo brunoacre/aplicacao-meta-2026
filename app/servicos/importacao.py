@@ -25,8 +25,10 @@ from .validacao import sem_acentos
 
 CABECALHOS = [
     "tipo_evento", "atividade", "modalidade", "data",
-    "hora_inicio", "hora_fim", "local", "envolvidos",
+    "hora_inicio", "local", "envolvidos",
 ]
+# Planilhas feitas antes da retirada da hora de término: a coluna é ignorada.
+CABECALHOS_ANTIGOS = CABECALHOS[:5] + ["hora_fim"] + CABECALHOS[5:]
 MAX_LINHAS = 1000
 # Arquivos de pré-visualização não confirmados são apagados depois deste tempo.
 VALIDADE_ARQUIVO = timedelta(days=1)
@@ -75,7 +77,7 @@ def gerar_modelo():
     aba = livro.active
     aba.title = "Atividades"
     aba.append(CABECALHOS)
-    for celula, largura in zip(aba[1], [24, 50, 16, 12, 12, 10, 20, 40]):
+    for celula, largura in zip(aba[1], [24, 50, 16, 12, 12, 20, 40]):
         celula.font = Font(bold=True)
         aba.column_dimensions[celula.column_letter].width = largura
     aba.freeze_panes = "A2"
@@ -87,7 +89,7 @@ def gerar_modelo():
         ["atividade: título da atividade."],
         ["modalidade: palestra, apresentacao, minicurso ou outra."],
         ["data: DD/MM/AAAA."],
-        ["hora_inicio e hora_fim: HH:MM; o término deve ser posterior ao início."],
+        ["hora_inicio: HH:MM. O formulário de presença abre à 00h00 da data."],
         ["local e envolvidos podem ficar em branco; os demais campos são obrigatórios."],
         ["Atividades com o mesmo título no mesmo evento não são importadas."],
     ]:
@@ -176,13 +178,18 @@ def ler_planilha(arquivo):
     cabecalho = [_texto(v).casefold() for v in linhas[0]]
     while cabecalho and not cabecalho[-1]:
         cabecalho.pop()
-    if cabecalho != CABECALHOS:
+    if cabecalho == CABECALHOS_ANTIGOS:
+        colunas = [CABECALHOS_ANTIGOS.index(nome) for nome in CABECALHOS]
+    elif cabecalho == CABECALHOS:
+        colunas = list(range(len(CABECALHOS)))
+    else:
         raise ErroPlanilha(
             "Os cabeçalhos da primeira linha devem ser exatamente: "
             + ", ".join(CABECALHOS) + ". Baixe o modelo para conferir.")
 
     corpo = [
-        (numero, linha) for numero, linha in enumerate(linhas[1:], start=2)
+        (numero, [linha[i] if i < len(linha) else None for i in colunas])
+        for numero, linha in enumerate(linhas[1:], start=2)
         if any(_texto(v) for v in linha)
     ]
     if not corpo:
@@ -220,23 +227,18 @@ def _validar_linha(numero, celulas):
     elif dia is None:
         erros.append("Data inválida: use DD/MM/AAAA.")
 
-    horas = {}
-    for nome in ("hora_inicio", "hora_fim"):
-        horas[nome] = converter_hora(brutos[nome])
-        if not valores[nome]:
-            erros.append(f"Informe o campo {nome}.")
-        elif horas[nome] is None:
-            erros.append(f"Hora inválida em {nome}: use HH:MM.")
-    if horas["hora_inicio"] and horas["hora_fim"] and horas["hora_fim"] <= horas["hora_inicio"]:
-        erros.append("A hora de término deve ser posterior à de início.")
+    hora_inicio = converter_hora(brutos["hora_inicio"])
+    if not valores["hora_inicio"]:
+        erros.append("Informe o campo hora_inicio.")
+    elif hora_inicio is None:
+        erros.append("Hora inválida em hora_inicio: use HH:MM.")
 
     linha.dados = {
         "tipo_evento": " ".join(valores["tipo_evento"].split()),
         "titulo": valores["atividade"],
         "modalidade": modalidade,
         "data": dia,
-        "hora_inicio": horas["hora_inicio"],
-        "hora_fim": horas["hora_fim"],
+        "hora_inicio": hora_inicio,
         "local": valores["local"],
         "envolvidos": valores["envolvidos"],
     }
@@ -289,7 +291,6 @@ def importar(resultado):
             modalidade=dados["modalidade"],
             data=dados["data"],
             hora_inicio=dados["hora_inicio"],
-            hora_fim=dados["hora_fim"],
             local=dados["local"],
             envolvidos=dados["envolvidos"],
             fecha_em=fechamento_padrao(dados["data"]),

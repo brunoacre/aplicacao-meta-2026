@@ -1,4 +1,7 @@
+import sqlite3
+
 import click
+from sqlalchemy import inspect, text
 
 from . import db
 from .models import Administrador
@@ -34,3 +37,19 @@ def registrar_comandos(app):
         db.session.add(admin)
         db.session.commit()
         click.echo(f"Administrador {email} criado.")
+
+    @app.cli.command("atualizar-banco")
+    def atualizar_banco():
+        """Ajusta um banco criado por versão anterior (SPEC seção 11). Pode rodar de novo."""
+        colunas = {c["name"] for c in inspect(db.engine).get_columns("atividade")}
+        if "hora_fim" in colunas:
+            # A3: a hora de término saiu do sistema. DROP COLUMN exige SQLite 3.35+.
+            if sqlite3.sqlite_version_info < (3, 35):
+                raise click.ClickException(
+                    f"SQLite {sqlite3.sqlite_version} não remove colunas (exige 3.35 ou "
+                    "mais novo). Use uma versão mais nova do Python no ambiente virtual.")
+            with db.engine.begin() as conexao:
+                conexao.execute(text("ALTER TABLE atividade DROP COLUMN hora_fim"))
+            click.echo("Coluna hora_fim removida da tabela atividade.")
+        else:
+            click.echo("O banco já está atualizado.")

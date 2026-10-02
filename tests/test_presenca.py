@@ -33,7 +33,7 @@ def dados(app):
         tipo = TipoEvento(nome="META")
         atividade = Atividade(
             tipo_evento=tipo, titulo="Palestra de abertura", modalidade="palestra",
-            data=DIA, hora_inicio=time(14, 0), hora_fim=time(15, 0), local="Auditório",
+            data=DIA, hora_inicio=time(14, 0), local="Auditório",
             fecha_em=fechamento_padrao(DIA),
         )
         ativo = CursoTurma(nome="Informática 1A")
@@ -84,13 +84,15 @@ def test_normalizar_matricula(entrada, esperado):
 # --- RN01–RN02: janela de tempo (serviço) ------------------------------------
 
 def _atividade(fecha_em=None):
-    return Atividade(data=DIA, hora_inicio=time(14, 0), hora_fim=time(15, 0),
-                     fecha_em=fecha_em or fechamento_padrao(DIA))
+    return Atividade(data=DIA, hora_inicio=time(14, 0), fecha_em=fecha_em or fechamento_padrao(DIA))
 
 
 @pytest.mark.parametrize("momento, esperado", [
     (datetime(2026, 10, 19, 23, 0), "nao_aberto"),
-    (datetime(2026, 10, 20, 13, 59, 59), "nao_aberto"),
+    (datetime(2026, 10, 19, 23, 59, 59), "nao_aberto"),
+    # RN01: abre à 00h00 do dia, mesmo antes da hora de início (14h00).
+    (datetime(2026, 10, 20, 0, 0), "aberto"),
+    (datetime(2026, 10, 20, 13, 59), "aberto"),
     (datetime(2026, 10, 20, 14, 0), "aberto"),
     (datetime(2026, 10, 20, 15, 30), "aberto"),
     (datetime(2026, 10, 20, 23, 59, 0), "aberto"),
@@ -132,10 +134,10 @@ def test_aviso_de_prazo_prorrogado_mostra_data(app, client, dados, relogio):
 
 
 def test_formulario_ainda_nao_aberto(client, dados, relogio):
-    relogio(datetime(2026, 10, 20, 13, 0))
+    relogio(datetime(2026, 10, 19, 22, 0))
     texto = _texto(client.get(f"/presenca/{dados['token']}"))
     assert "Formulário ainda não aberto" in texto
-    assert "abre em 20/10/2026 às 14h00" in texto
+    assert "abre em 20/10/2026, no dia da atividade" in texto
     assert "Registrar presença" not in texto
 
 
@@ -160,7 +162,7 @@ def test_id_interno_nao_funciona_na_url(client, dados, relogio):
 # --- RN03: validação da janela no envio --------------------------------------
 
 def test_envio_antes_da_abertura_e_recusado(app, client, dados, relogio):
-    relogio(datetime(2026, 10, 20, 13, 59))
+    relogio(datetime(2026, 10, 19, 23, 59))
     assert "Formulário ainda não aberto" in _texto(_enviar(client, dados))
     assert _respostas(app) == []
 
@@ -229,8 +231,7 @@ def test_mesma_matricula_em_outra_atividade(app, client, dados, relogio):
     with app.app_context():
         tipo = db.session.execute(db.select(TipoEvento)).scalar_one()
         outra = Atividade(tipo_evento=tipo, titulo="Outra", modalidade="minicurso",
-                          data=DIA, hora_inicio=time(14, 0), hora_fim=time(16, 0),
-                          fecha_em=fechamento_padrao(DIA))
+                          data=DIA, hora_inicio=time(14, 0), fecha_em=fechamento_padrao(DIA))
         db.session.add(outra)
         db.session.commit()
         outro_token = outra.token
@@ -337,7 +338,7 @@ def test_token_csrf_invalido_devolve_formulario_preenchido(tmp_path, relogio):
         atividade = Atividade(
             tipo_evento=TipoEvento(nome="META"), titulo="Palestra",
             modalidade="palestra", data=DIA, hora_inicio=time(14, 0),
-            hora_fim=time(15, 0), fecha_em=fechamento_padrao(DIA))
+            fecha_em=fechamento_padrao(DIA))
         curso = CursoTurma(nome="Informática 1A")
         db.session.add_all([atividade, curso])
         db.session.commit()

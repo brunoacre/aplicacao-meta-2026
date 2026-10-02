@@ -7,7 +7,7 @@
     <div class="text-body-secondary small">{{ atividade.tipo_evento.nome }}</div>
     <h1 class="h3 mb-1">{{ atividade.titulo }}</h1>
     <div class="text-body-secondary">
-      {{ atividade.data|data }}, das {{ atividade.hora_inicio|hora_h }} às {{ atividade.hora_fim|hora_h }}
+      {{ atividade.data|data }}, às {{ atividade.hora_inicio|hora_h }}
       {% if atividade.local %} · {{ atividade.local }}{% endif %}
     </div>
   </div>

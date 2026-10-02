@@ -4,7 +4,7 @@ A rota pública faz no máximo duas consultas (atividade e cursos/turmas ativos)
 mais o INSERT da resposta (SPEC seção 8).
 """
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
@@ -30,8 +30,8 @@ def normalizar_matricula(texto):
 
 
 def abertura(atividade):
-    """RN01: o formulário abre na data e hora de início da atividade."""
-    return datetime.combine(atividade.data, atividade.hora_inicio)
+    """RN01: o formulário abre à 00h00 da data da atividade."""
+    return datetime.combine(atividade.data, time.min)
 
 
 def situacao_janela(atividade, momento):

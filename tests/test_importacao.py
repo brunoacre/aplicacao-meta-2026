@@ -27,8 +27,7 @@ def _linha(**extra):
     dados = {
         "tipo_evento": "35ª META 2026", "atividade": "Palestra de abertura",
         "modalidade": "palestra", "data": "20/10/2026",
-        "hora_inicio": "14:00", "hora_fim": "15:00",
-        "local": "Auditório", "envolvidos": "Fulano, Beltrana",
+        "hora_inicio": "14:00", "local": "Auditório", "envolvidos": "Fulano, Beltrana",
     }
     dados.update(extra)
     return [dados[c] for c in CABECALHOS]
@@ -45,7 +44,7 @@ def _criar_atividade(app, nome_evento, titulo):
         dia = date(2026, 10, 20)
         db.session.add(Atividade(
             tipo_evento=tipo, titulo=titulo, modalidade="palestra", data=dia,
-            hora_inicio=time(14), hora_fim=time(15), fecha_em=fechamento_padrao(dia)))
+            hora_inicio=time(14), fecha_em=fechamento_padrao(dia)))
         db.session.commit()
 
 
@@ -69,17 +68,16 @@ def test_linha_valida_e_convertida(app):
     assert linha.dados == {
         "tipo_evento": "35ª META 2026", "titulo": "Palestra de abertura",
         "modalidade": "palestra", "data": date(2026, 10, 20),
-        "hora_inicio": time(14), "hora_fim": time(15),
-        "local": "Auditório", "envolvidos": "Fulano, Beltrana",
+        "hora_inicio": time(14), "local": "Auditório", "envolvidos": "Fulano, Beltrana",
     }
 
 
 def test_celulas_de_data_e_hora_do_excel(app):
-    resultado = _ler(app, _linha(data=datetime(2026, 10, 20), hora_inicio=time(14, 0),
-                                 hora_fim=datetime(1899, 12, 30, 14, 20)))
+    resultado = _ler(app, _linha(data=datetime(2026, 10, 20),
+                                 hora_inicio=datetime(1899, 12, 30, 14, 20)))
     linha, = resultado.validas
     assert linha.dados["data"] == date(2026, 10, 20)
-    assert linha.dados["hora_fim"] == time(14, 20)
+    assert linha.dados["hora_inicio"] == time(14, 20)
 
 
 @pytest.mark.parametrize("texto, codigo", [
@@ -111,9 +109,7 @@ def test_local_e_envolvidos_podem_ficar_em_branco(app):
     ("data", "31/02/2026", "Data inválida"),
     ("hora_inicio", None, "Informe o campo hora_inicio."),
     ("hora_inicio", "25:00", "Hora inválida em hora_inicio"),
-    ("hora_fim", "duas horas", "Hora inválida em hora_fim"),
-    ("hora_fim", "13:00", "A hora de término deve ser posterior à de início."),
-    ("hora_fim", "14:00", "A hora de término deve ser posterior à de início."),
+    ("hora_inicio", "duas horas", "Hora inválida em hora_inicio"),
     ("atividade", "x" * 301, "O campo atividade passa de 300 caracteres."),
     ("local", "x" * 121, "O campo local passa de 120 caracteres."),
 ])
@@ -126,7 +122,7 @@ def test_erros_por_linha(app, campo, valor, mensagem):
 
 
 def test_linhas_vazias_sao_ignoradas(app):
-    resultado = _ler(app, _linha(), [None] * 8, ["", " "], _linha(atividade="Outra"))
+    resultado = _ler(app, _linha(), [None] * 7, ["", " "], _linha(atividade="Outra"))
     assert [linha.numero for linha in resultado.linhas] == [2, 5]
 
 
@@ -134,6 +130,22 @@ def test_cabecalho_diferente(app):
     cabecalhos = CABECALHOS[:3] + ["dia"] + CABECALHOS[4:]
     with pytest.raises(ErroPlanilha, match="cabeçalhos"):
         _ler(app, _linha(), cabecalhos=cabecalhos)
+
+
+def test_planilha_antiga_com_hora_fim_e_aceita(app):
+    # A3: a coluna hora_fim de planilhas antigas é ignorada.
+    antiga = _linha()
+    antiga.insert(5, "15:00")
+    linha, = _ler(app, antiga, cabecalhos=importacao.CABECALHOS_ANTIGOS).validas
+    assert linha.dados["hora_inicio"] == time(14)
+    assert linha.dados["local"] == "Auditório"
+    assert linha.dados["envolvidos"] == "Fulano, Beltrana"
+
+
+def test_modelo_nao_tem_hora_fim(app):
+    aba = load_workbook(importacao.gerar_modelo()).active
+    assert [c.value for c in aba[1]] == CABECALHOS
+    assert "hora_fim" not in CABECALHOS
 
 
 def test_cabecalho_com_maiusculas_e_espacos_e_aceito(app):

@@ -22,8 +22,7 @@ def base(app):
 
         def atividade(tipo, titulo, dia, hora):
             return Atividade(tipo_evento=tipo, titulo=titulo, modalidade="palestra",
-                             data=dia, hora_inicio=time(hora), hora_fim=time(hora + 1),
-                             fecha_em=fechamento_padrao(dia))
+                             data=dia, hora_inicio=time(hora), fecha_em=fechamento_padrao(dia))
         atividades = [
             atividade(meta, "Abertura", date(2026, 10, 20), 9),
             atividade(meta, "Robótica", date(2026, 10, 21), 14),
@@ -77,9 +76,9 @@ def test_rotas_exigem_login(client, url):
 
 # --- RF10: consolidado por turma ---------------------------------------------
 
-def test_consolidado_uma_aba_por_turma_com_colunas_de_atividades(app, cliente_logado, base):
-    _responder(app, base["abertura"], base["info"], "2026001", "Bruna Silva")
+def test_consolidado_uma_aba_por_turma_com_lista_de_alunos(app, cliente_logado, base):
     _responder(app, base["robotica"], base["info"], "2026001", "Bruna Silva")
+    _responder(app, base["abertura"], base["info"], "2026001", "Bruna Silva")
     _responder(app, base["abertura"], base["info"], "2026002", "Ana Souza")
     _responder(app, base["astronomia"], base["meca"], "2026003", "Carlos Lima")
 
@@ -90,21 +89,33 @@ def test_consolidado_uma_aba_por_turma_com_colunas_de_atividades(app, cliente_lo
     livro = _planilha(resposta)
     assert livro.sheetnames == ["Resumo", "Informática 1-A", "Mecatrônica 2B"]
 
+    # A2: nome, matrícula, evento, atividades concatenadas (por data) e quantidade.
     linhas = _linhas(livro["Informática 1-A"])
-    assert linhas[0] == ["Matrícula", "Nome", "E-mail", "Quantidade de atividades",
-                         "35ª META 2026 – 20/10/2026 – Abertura",
-                         "35ª META 2026 – 21/10/2026 – Robótica"]
-    assert linhas[1:] == [
-        ["2026002", "Ana Souza", "aluno@email.com", 1, "X"],
-        ["2026001", "Bruna Silva", "aluno@email.com", 2, "X", "X"],
+    assert linhas == [
+        ["Nome", "Matrícula", "Evento", "Atividades", "Quantidade de atividades"],
+        ["Ana Souza", "2026002", "35ª META 2026", "20/10/2026 – Abertura", 1],
+        ["Bruna Silva", "2026001", "35ª META 2026",
+         "20/10/2026 – Abertura; 21/10/2026 – Robótica", 2],
     ]
-    assert _linhas(livro["Mecatrônica 2B"])[1][:4] == ["2026003", "Carlos Lima",
-                                                        "aluno@email.com", 1]
+    assert _linhas(livro["Mecatrônica 2B"])[1] == [
+        "Carlos Lima", "2026003", "Semana C&T 2026", "05/11/2026 – Astronomia", 1]
 
     resumo = _linhas(livro["Resumo"])
     assert ["Tipo de evento", "Todos os eventos"] in resumo
     assert ["Informática 1/A", "Informática 1-A", 2, 3] in resumo
     assert ["Mecatrônica 2B", "Mecatrônica 2B", 1, 1] in resumo
+
+
+def test_consolidado_sem_filtro_tem_uma_linha_por_evento(app, base):
+    # A quantidade conta só as atividades de cada evento.
+    _responder(app, base["abertura"], base["info"], "2026001", "Bruna")
+    _responder(app, base["robotica"], base["info"], "2026001", "Bruna")
+    _responder(app, base["astronomia"], base["info"], "2026001", "Bruna")
+    with app.app_context():
+        turma, = relatorios.consolidar_por_turma()
+        assert [(l.evento, len(l.atividades)) for l in turma.linhas] == [
+            ("35ª META 2026", 2), ("Semana C&T 2026", 1)]
+        assert (turma.quantidade_alunos, turma.quantidade_presencas) == (1, 3)
 
 
 def test_consolidado_filtrado_por_evento(app, cliente_logado, base):
@@ -116,9 +127,8 @@ def test_consolidado_filtrado_por_evento(app, cliente_logado, base):
     assert "consolidado-por-turma-35a-meta-2026.xlsx" in resposta.headers["Content-Disposition"]
     livro = _planilha(resposta)
     assert livro.sheetnames == ["Resumo", "Informática 1-A"]
-    linhas = _linhas(livro["Informática 1-A"])
-    assert linhas[0][4:] == ["20/10/2026 – Abertura"]  # sem o nome do evento
-    assert linhas[1][3] == 1
+    assert _linhas(livro["Informática 1-A"])[1:] == [
+        ["Bruna", "2026001", "35ª META 2026", "20/10/2026 – Abertura", 1]]
 
 
 def test_aluno_com_turmas_diferentes_aparece_em_cada_uma(app, base):
@@ -126,20 +136,31 @@ def test_aluno_com_turmas_diferentes_aparece_em_cada_uma(app, base):
     _responder(app, base["robotica"], base["meca"], "2026001", "Bruna")
     with app.app_context():
         turmas = relatorios.consolidar_por_turma()
-        assert [(t.nome, [a.atividade_ids for a in t.alunos]) for t in turmas] == [
-            ("Informática 1/A", [{base["abertura"]}]),
-            ("Mecatrônica 2B", [{base["robotica"]}]),
+        assert [(t.nome, [[a.id for a in l.atividades] for l in t.linhas])
+                for t in turmas] == [
+            ("Informática 1/A", [[base["abertura"]]]),
+            ("Mecatrônica 2B", [[base["robotica"]]]),
         ]
 
 
-def test_nome_e_email_da_resposta_mais_recente(app, base):
+def test_nome_da_resposta_mais_recente(app, base):
     _responder(app, base["robotica"], base["info"], "2026001", "Bruna S. Lima",
-               email="novo@email.com", enviado_em=datetime(2026, 10, 21, 15))
+               enviado_em=datetime(2026, 10, 21, 15))
     _responder(app, base["abertura"], base["info"], "2026001", "bruna",
-               email="antigo@email.com", enviado_em=datetime(2026, 10, 20, 10))
+               enviado_em=datetime(2026, 10, 20, 10))
+    _responder(app, base["astronomia"], base["info"], "2026001", "bruna",
+               enviado_em=datetime(2026, 11, 5, 9))
     with app.app_context():
-        aluno, = relatorios.consolidar_por_turma()[0].alunos
-        assert (aluno.nome, aluno.email) == ("Bruna S. Lima", "novo@email.com")
+        linhas = relatorios.consolidar_por_turma()[0].linhas
+        # Mesmo nome em todas as linhas do aluno: o da resposta mais recente na turma.
+        assert [l.nome for l in linhas] == ["bruna", "bruna"]
+
+
+def test_planilha_nao_tem_email(app, cliente_logado, base):
+    _responder(app, base["abertura"], base["info"], "2026001", "Bruna",
+               email="bruna@email.com")
+    livro = _planilha(cliente_logado.get("/admin/relatorios/consolidado.xlsx"))
+    assert "bruna@email.com" not in str(_linhas(livro["Informática 1-A"]))
 
 
 def test_consolidado_sem_respostas(cliente_logado, base):

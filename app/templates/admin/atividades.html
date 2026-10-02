@@ -51,7 +51,7 @@
   <table class="table table-sm table-hover align-middle">
     <thead>
       <tr>
-        <th>Data</th><th>Horário</th><th>Título</th><th>Tipo de evento</th>
+        <th>Data</th><th>Início</th><th>Título</th><th>Tipo de evento</th>
         <th>Modalidade</th><th>Local</th><th>Fecha em</th><th class="text-end">Ações</th>
       </tr>
     </thead>
@@ -59,7 +59,7 @@
       {% for atividade in atividades %}
       <tr>
         <td class="text-nowrap">{{ atividade.data|data }}</td>
-        <td class="text-nowrap">{{ atividade.hora_inicio|hora }}–{{ atividade.hora_fim|hora }}</td>
+        <td class="text-nowrap">{{ atividade.hora_inicio|hora }}</td>
         <td>{{ atividade.titulo }}</td>
         <td class="text-nowrap">{{ atividade.tipo_evento.nome }}</td>
         <td>{{ atividade.modalidade_rotulo }}</td>

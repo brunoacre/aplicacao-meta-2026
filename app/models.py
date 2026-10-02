@@ -64,8 +64,8 @@ class Atividade(db.Model):
     titulo = db.Column(db.String(300), nullable=False)
     modalidade = db.Column(db.String(20), nullable=False)
     data = db.Column(db.Date, nullable=False)
+    # Só informativa e para ordenar: o formulário abre à 00h00 da data (RN01).
     hora_inicio = db.Column(db.Time, nullable=False)
-    hora_fim = db.Column(db.Time, nullable=False)
     local = db.Column(db.String(120), nullable=False, default="")
     envolvidos = db.Column(db.Text, nullable=False, default="")
     token = db.Column(

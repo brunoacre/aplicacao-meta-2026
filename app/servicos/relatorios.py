@@ -5,7 +5,6 @@ from io import BytesIO
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
-from openpyxl.utils import get_column_letter
 from sqlalchemy.orm import joinedload
 
 from .. import db
@@ -24,10 +23,9 @@ def _ordem_atividade(atividade):
     return (atividade.data, atividade.hora_inicio, chave_nome(atividade.titulo))
 
 
-def rotulo_atividade(atividade, com_evento=False):
-    """Ex.: "20/10/2026 – Título" ou "35ª META 2026 – 20/10/2026 – Título"."""
-    rotulo = f"{formatar_data(atividade.data)} – {atividade.titulo}"
-    return f"{atividade.tipo_evento.nome} – {rotulo}" if com_evento else rotulo
+def rotulo_atividade(atividade):
+    """Ex.: "20/10/2026 – Título"."""
+    return f"{formatar_data(atividade.data)} – {atividade.titulo}"
 
 
 # --- Planilhas: utilidades ---------------------------------------------------
@@ -70,26 +68,34 @@ def nome_aba(nome, usados):
 # --- RF10: consolidado por curso/turma ---------------------------------------
 
 @dataclass
-class AlunoTurma:
+class AlunoEvento:
+    """Uma linha do consolidado: um aluno de uma turma em um evento."""
     matricula: str
+    evento: str
     nome: str = ""
-    email: str = ""
-    ultimo_envio: object = None
-    atividade_ids: set = field(default_factory=set)
+    atividades: list = field(default_factory=list)  # Atividade, por data
 
 
 @dataclass
 class TurmaConsolidada:
     nome: str
-    alunos: list  # AlunoTurma, por nome
-    atividades: list  # Atividade com presença de algum aluno da turma, por data
+    linhas: list  # AlunoEvento, por nome do aluno e nome do evento
+
+    @property
+    def quantidade_alunos(self):
+        return len({linha.matricula for linha in self.linhas})
+
+    @property
+    def quantidade_presencas(self):
+        return sum(len(linha.atividades) for linha in self.linhas)
 
 
 def consolidar_por_turma(tipo_evento_id=None):
-    """Agrupa as respostas por curso/turma e, dentro dela, por matrícula.
+    """Agrupa as respostas por curso/turma e, dentro dela, por matrícula e evento.
 
     Um aluno que informou turmas diferentes aparece em cada uma delas, contando
-    só as atividades daquela turma. Nome e e-mail vêm da resposta mais recente.
+    só as atividades daquela turma. O nome vem da resposta mais recente do aluno
+    na turma.
     """
     consulta = (
         db.select(Resposta, CursoTurma.nome)
@@ -100,25 +106,33 @@ def consolidar_por_turma(tipo_evento_id=None):
     if tipo_evento_id:
         consulta = consulta.where(Atividade.tipo_evento_id == tipo_evento_id)
 
-    turmas = {}  # nome da turma -> (alunos por matrícula, atividades por id)
+    turmas = {}  # nome da turma -> (linhas por (matrícula, evento), nome mais recente)
     for resposta, nome_turma in db.session.execute(consulta):
-        alunos, atividades = turmas.setdefault(nome_turma, ({}, {}))
-        aluno = alunos.setdefault(resposta.matricula, AlunoTurma(resposta.matricula))
-        if aluno.ultimo_envio is None or resposta.enviado_em >= aluno.ultimo_envio:
-            aluno.nome, aluno.email = resposta.nome, resposta.email
-            aluno.ultimo_envio = resposta.enviado_em
-        aluno.atividade_ids.add(resposta.atividade_id)
-        atividades[resposta.atividade_id] = resposta.atividade
+        linhas, nomes = turmas.setdefault(nome_turma, ({}, {}))
+        atividade = resposta.atividade
+        chave = (resposta.matricula, atividade.tipo_evento_id)
+        linha = linhas.setdefault(
+            chave, AlunoEvento(resposta.matricula, atividade.tipo_evento.nome))
+        linha.atividades.append(atividade)
+        envio, _ = nomes.get(resposta.matricula, (None, None))
+        if envio is None or resposta.enviado_em >= envio:
+            nomes[resposta.matricula] = (resposta.enviado_em, resposta.nome)
 
-    return [
-        TurmaConsolidada(
-            nome=nome,
-            alunos=sorted(alunos.values(), key=lambda a: (chave_nome(a.nome), a.matricula)),
-            atividades=sorted(atividades.values(), key=_ordem_atividade),
-        )
-        for nome, (alunos, atividades) in sorted(
-            turmas.items(), key=lambda item: chave_nome(item[0]))
-    ]
+    resultado = []
+    for nome_turma, (linhas, nomes) in sorted(turmas.items(),
+                                             key=lambda item: chave_nome(item[0])):
+        for linha in linhas.values():
+            linha.nome = nomes[linha.matricula][1]
+            linha.atividades.sort(key=_ordem_atividade)
+        resultado.append(TurmaConsolidada(nome_turma, sorted(
+            linhas.values(),
+            key=lambda l: (chave_nome(l.nome), l.matricula, chave_nome(l.evento)))))
+    return resultado
+
+
+def texto_atividades(atividades):
+    """Ex.: "20/10/2026 – Abertura; 21/10/2026 – Robótica"."""
+    return "; ".join(rotulo_atividade(atividade) for atividade in atividades)
 
 
 def exportar_consolidado(turmas, tipo_evento=None):
@@ -138,22 +152,18 @@ def exportar_consolidado(turmas, tipo_evento=None):
 
     for turma in turmas:
         aba = livro.create_sheet(nome_aba(turma.nome, usados))
-        _anexar(resumo, [turma.nome, aba.title, len(turma.alunos),
-                         sum(len(a.atividade_ids) for a in turma.alunos)])
+        _anexar(resumo, [turma.nome, aba.title, turma.quantidade_alunos,
+                         turma.quantidade_presencas])
 
-        colunas = ["Matrícula", "Nome", "E-mail", "Quantidade de atividades"]
-        _cabecalho(aba, colunas + [rotulo_atividade(at, com_evento=tipo_evento is None)
-                                   for at in turma.atividades],
-                   [16, 36, 32, 14] + [22] * len(turma.atividades))
-        aba.row_dimensions[1].height = 75
-        for aluno in turma.alunos:
-            marcas = ["X" if at.id in aluno.atividade_ids else "" for at in turma.atividades]
-            _anexar(aba, [aluno.matricula, aluno.nome, aluno.email,
-                          len(aluno.atividade_ids)] + marcas)
-        for coluna in range(4, len(colunas) + len(turma.atividades) + 1):
-            for celula in aba[get_column_letter(coluna)][1:]:
-                celula.alignment = Alignment(horizontal="center")
-        aba.freeze_panes = "E2"
+        _cabecalho(aba, ["Nome", "Matrícula", "Evento", "Atividades",
+                         "Quantidade de atividades"], [36, 16, 24, 80, 14])
+        for linha in turma.linhas:
+            _anexar(aba, [linha.nome, linha.matricula, linha.evento,
+                          texto_atividades(linha.atividades), len(linha.atividades)])
+            aba.cell(aba.max_row, 4).alignment = Alignment(wrap_text=True, vertical="top")
+            aba.cell(aba.max_row, 5).alignment = Alignment(horizontal="center",
+                                                           vertical="top")
+        aba.freeze_panes = "A2"
         aba.auto_filter.ref = aba.dimensions
 
     for coluna, largura in zip("ABCD", [36, 24, 10, 12]):

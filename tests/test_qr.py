@@ -19,7 +19,7 @@ def _criar(app, nome_evento="35ª META 2026", titulo="Palestra", dia=date(2026, 
         tipo = tipo or TipoEvento(nome=nome_evento)
         atividade = Atividade(
             tipo_evento=tipo, titulo=titulo, modalidade=modalidade, data=dia,
-            hora_inicio=time(14), hora_fim=time(14, 20), local=local,
+            hora_inicio=time(14), local=local,
             envolvidos=envolvidos, fecha_em=fechamento_padrao(dia))
         db.session.add(atividade)
         db.session.commit()
@@ -78,30 +78,17 @@ def test_png_de_atividade_inexistente(cliente_logado):
 # --- PDF ---------------------------------------------------------------------
 
 def test_textos_da_pagina(app):
+    # A1: só evento, título e data acima do QR Code.
     id_, _ = _criar(app, titulo="Ecoara", envolvidos="Fulano, Beltrana")
-    app.config["URL_PUBLICA"] = "https://meta.exemplo.br"
-    with app.test_request_context():
-        atividade = db.session.get(Atividade, id_)
-        textos = pdf_qr.textos_da_pagina(atividade)
-        assert textos["evento"] == "35ª META 2026"
-        assert textos["titulo"] == "Ecoara"
-        assert textos["data"] == "20/10/2026, das 14h00 às 14h20"
-        assert textos["local"] == "Local: Sala 12"
-        assert textos["envolvidos"] == "Envolvidos: Fulano, Beltrana"
-        assert textos["url"] == f"https://meta.exemplo.br/presenca/{atividade.token}"
-
-
-def test_textos_sem_local_e_envolvidos(app):
-    id_, _ = _criar(app, local="", envolvidos="")
     with app.test_request_context():
         textos = pdf_qr.textos_da_pagina(db.session.get(Atividade, id_))
-        assert "local" not in textos and "envolvidos" not in textos
+        assert textos == {"evento": "35ª META 2026", "titulo": "Ecoara", "data": "20/10/2026"}
 
 
 def test_pdf_uma_pagina_por_atividade_do_evento(app, cliente_logado):
     _, tipo_id = _criar(app, titulo="A")
     _criar(app, titulo="B")
-    _criar(app, titulo="C", envolvidos="Pessoa, " * 300)  # texto longo não quebra o PDF
+    _criar(app, titulo="Palestra " * 60)  # título longo não quebra o PDF
     _criar(app, nome_evento="Semana C&T 2026", titulo="Outra")
     resposta = cliente_logado.get(f"/admin/atividades/qrcodes.pdf?tipo_evento={tipo_id}")
     assert resposta.status_code == 200

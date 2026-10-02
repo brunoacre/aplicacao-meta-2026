@@ -119,12 +119,19 @@ prática, que as gravações simultâneas funcionam.
 
 ### Atualizar o sistema
 
+Antes de atualizar, faça uma cópia do banco (seção abaixo). Depois:
+
 ```bash
 cd ~/app-meta
 git pull
 source .venv/bin/activate
 pip install -r requirements.txt
+flask --app wsgi atualizar-banco
 ```
+
+O comando `atualizar-banco` ajusta o banco às mudanças da nova versão (por exemplo, a
+retirada da hora de término das atividades). Pode ser rodado sempre: quando não há nada
+a ajustar, ele só avisa que o banco já está atualizado.
 
 Depois, clique em **Reload** na aba **Web**.
 

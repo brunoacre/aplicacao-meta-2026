@@ -81,3 +81,11 @@ requirements.txt
     link pode sair como http atrás do proxy), `SECRET_KEY` e `EVENTOS_DB`.
   - Sem `SECRET_KEY`, a chave é gerada e guardada em `instance/secret_key`.
   - `URL_PUBLICA` com https ativa cookies seguros (sessão e "lembrar-me").
+- [x] 8. Alterações após a implantação (SPEC seção 11)
+  - [x] A1. PDF de QR Codes: página A4 com evento, título, data e QR Code abaixo
+    (sem horário, local, envolvidos, instrução ou link).
+  - [x] A2. Consolidado por curso/turma: lista de alunos com nome, matrícula, evento,
+    atividades em texto concatenado e quantidade; uma linha por aluno e evento.
+  - [x] A3. Remover `hora_fim` (cadastro, importação, planilha modelo, telas e PDF);
+    formulário abre à 00h00 da data. Banco em produção: rodar
+    `flask --app wsgi atualizar-banco` após backup.

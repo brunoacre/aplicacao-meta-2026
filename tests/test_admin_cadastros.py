@@ -24,8 +24,7 @@ def _dados_atividade(tipo_id, **extra):
     dados = {
         "tipo_evento_id": tipo_id, "titulo": "Palestra de abertura",
         "modalidade": "palestra", "data": "2026-10-20",
-        "hora_inicio": "14:00", "hora_fim": "15:00",
-        "local": "Auditório", "envolvidos": "Fulano", "fecha_em": "",
+        "hora_inicio": "14:00", "local": "Auditório", "envolvidos": "Fulano", "fecha_em": "",
     }
     dados.update(extra)
     return dados
@@ -36,8 +35,7 @@ def _criar_atividade(app, tipo_id, titulo="Palestra", dia=date(2026, 10, 20),
     with app.app_context():
         atividade = Atividade(
             tipo_evento_id=tipo_id, titulo=titulo, modalidade=modalidade, data=dia,
-            hora_inicio=time(14, 0), hora_fim=time(15, 0),
-            fecha_em=fechamento_padrao(dia),
+            hora_inicio=time(14, 0), fecha_em=fechamento_padrao(dia),
         )
         db.session.add(atividade)
         db.session.commit()
@@ -185,20 +183,26 @@ def test_criar_atividade_com_fechamento_informado(app, cliente_logado, tipo_id):
         assert atividade.fecha_em == datetime(2026, 10, 22, 18, 0)
 
 
-@pytest.mark.parametrize("hora_fim", ["14:00", "13:30"])
-def test_hora_fim_deve_ser_posterior(app, cliente_logado, tipo_id, hora_fim):
-    resposta = cliente_logado.post("/admin/atividades/nova",
-                                   data=_dados_atividade(tipo_id, hora_fim=hora_fim))
-    assert "A hora de término deve ser posterior à de início." in _texto(resposta)
+def test_formulario_de_atividade_nao_tem_hora_de_termino(cliente_logado, tipo_id):
+    assert "Hora de término" not in _texto(cliente_logado.get("/admin/atividades/nova"))
+
+
+def test_fechamento_pode_ser_antes_da_hora_de_inicio(app, cliente_logado, tipo_id):
+    # RN01: o formulário abre à 00h00, então pode fechar antes da hora de início.
+    cliente_logado.post("/admin/atividades/nova",
+                        data=_dados_atividade(tipo_id, fecha_em="2026-10-20T12:00"))
+    with app.app_context():
+        assert db.session.execute(db.select(Atividade)).scalar_one().fecha_em == \
+            datetime(2026, 10, 20, 12, 0)
+
+
+@pytest.mark.parametrize("fecha_em", ["2026-10-20T00:00", "2026-10-19T18:00"])
+def test_fechamento_nao_pode_ser_antes_do_dia(app, cliente_logado, tipo_id, fecha_em):
+    resposta = cliente_logado.post(
+        "/admin/atividades/nova", data=_dados_atividade(tipo_id, fecha_em=fecha_em))
+    assert "O fechamento deve ser depois do início do dia da atividade." in _texto(resposta)
     with app.app_context():
         assert db.session.query(Atividade).count() == 0
-
-
-def test_fechamento_nao_pode_ser_antes_do_inicio(cliente_logado, tipo_id):
-    resposta = cliente_logado.post(
-        "/admin/atividades/nova",
-        data=_dados_atividade(tipo_id, fecha_em="2026-10-20T13:59"))
-    assert "O fechamento não pode ser anterior ao início da atividade." in _texto(resposta)
 
 
 def test_campos_obrigatorios_da_atividade(cliente_logado, tipo_id):
