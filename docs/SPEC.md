@@ -47,7 +47,8 @@ dependências que exijam configuração especial no servidor.
 
 - **RF01 – Login e logout** de administradores.
 - **RF02 – Tipos de evento**: cadastrar, editar e desativar (ex.: META, Semana C&T).
-  Campos: nome, ano, ativo.
+  Campos: nome, ativo. O evento é identificado apenas pelo nome, que deve incluir a
+  edição e o ano (ex.: "35ª META 2026"); não pode haver dois tipos com o mesmo nome.
 - **RF03 – Cursos/turmas**: cadastrar, editar e desativar os itens que aparecem na
   lista do formulário do aluno. Campos: nome, ativo.
 - **RF04 – Atividades**: cadastrar, editar, listar e excluir. Campos: tipo de evento,
@@ -66,13 +67,13 @@ dependências que exijam configuração especial no servidor.
 - **RF07 – QR Code individual**: baixar a imagem PNG do QR Code de uma atividade.
 - **RF08 – Folha de QR Codes em PDF**: gerar um PDF com as atividades filtradas
   (ex.: todas de um evento), uma por página, contendo nome do evento, título da
-  atividade, data, horário, local e o QR Code em tamanho grande.
+  atividade, data, horário, local, pessoas envolvidas e o QR Code em tamanho grande.
 - **RF09 – Relatório de presença por atividade** (exportado em XLSX): nome, matrícula,
   curso/turma, e-mail, descrição e data/hora do envio.
 - **RF10 – Relatório consolidado por curso/turma** (exportado em XLSX): com filtro
   opcional por tipo de evento; uma aba por curso/turma, uma linha por aluno com
-  matrícula, nome, e-mail, quantidade de atividades com presença e a lista dessas
-  atividades.
+  matrícula, nome, e-mail, quantidade de atividades com presença e uma coluna por
+  atividade (marcada com "X" quando o aluno esteve presente).
 - **RF11 – Pesquisa por aluno** (tela, sem exportação): busca por nome ou matrícula;
   exibe as atividades em que o aluno registrou presença, com data e tipo de evento.
 - **RF12 – Visualização de respostas**: o administrador pode ver as respostas de cada
@@ -117,7 +118,7 @@ dependências que exijam configuração especial no servidor.
 
 ```
 Administrador: id, nome, email (único), senha_hash, ativo
-TipoEvento:    id, nome, ano, ativo
+TipoEvento:    id, nome, ativo
 CursoTurma:    id, nome, ativo
 Atividade:     id, tipo_evento_id, titulo, modalidade, data, hora_inicio,
                hora_fim, local, envolvidos, token (único), fecha_em

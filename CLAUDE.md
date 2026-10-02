@@ -60,10 +60,24 @@ requirements.txt
 
 ## Status das etapas
 
-- [ ] 1. Estrutura, base.html, tema.css, modelos, criar-admin e login
-- [ ] 2. CRUD de tipos de evento, cursos/turmas e atividades
-- [ ] 3. Formulário público com janela de tempo e regras RN01–RN06
-- [ ] 4. QR Code individual e PDF de impressão
-- [ ] 5. Importação de planilha com pré-visualização
-- [ ] 6. Relatórios e pesquisa por aluno
-- [ ] 7. README e ajustes para o PythonAnywhere
+- [x] 1. Estrutura, base.html, tema.css, modelos, criar-admin e login
+- [x] 2. CRUD de tipos de evento, cursos/turmas e atividades
+- [x] 3. Formulário público com janela de tempo e regras RN01–RN06
+- [x] 4. QR Code individual e PDF de impressão
+  - PDF por filtros da listagem (atalho por evento na tela de tipos de evento);
+    página com evento, título, data/horário, local, envolvidos e QR Code.
+- [x] 5. Importação de planilha com pré-visualização
+  - O evento é identificado só pelo **nome** (ex.: "35ª META 2026"); o modelo
+    não tem campo de ano. Nome de tipo de evento é único (sem diferenciar
+    maiúsculas e espaços extras).
+  - Duplicidade (cadastro e importação): nome do evento + título da atividade,
+    sem diferenciar maiúsculas e espaços extras (`servicos/cadastros.py`).
+- [x] 6. Relatórios e pesquisa por aluno (inclui o RF12, adiado da etapa 2)
+  - Consolidado (RF10): aluno identificado pela matrícula; quem informou turmas
+    diferentes aparece em cada aba, contando só as atividades daquela turma
+    (validar manualmente com dados reais). Nome/e-mail da resposta mais recente.
+- [x] 7. README e ajustes para o PythonAnywhere
+  - README documenta `URL_PUBLICA` (endereço https usado nos QR Codes; sem ela o
+    link pode sair como http atrás do proxy), `SECRET_KEY` e `EVENTOS_DB`.
+  - Sem `SECRET_KEY`, a chave é gerada e guardada em `instance/secret_key`.
+  - `URL_PUBLICA` com https ativa cookies seguros (sessão e "lembrar-me").
