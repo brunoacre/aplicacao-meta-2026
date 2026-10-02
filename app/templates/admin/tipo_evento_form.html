@@ -1,0 +1,18 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campos.html" import campo, caixa %}
+{% block titulo %}{{ "Editar tipo de evento" if tipo.id else "Cadastrar tipo de evento" }}{% endblock %}
+
+{% block conteudo %}
+<h1 class="h3 mb-3">{{ "Editar tipo de evento" if tipo.id else "Cadastrar tipo de evento" }}</h1>
+<form method="post" novalidate class="formulario-admin">
+  {{ form.hidden_tag() }}
+  <div class="row g-3">
+    {{ campo(form.nome, classe="col-12 col-sm-8") }}
+  </div>
+  <div class="mt-3">{{ caixa(form.ativo) }}</div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">{{ "Salvar alterações" if tipo.id else "Cadastrar tipo de evento" }}</button>
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.tipos_evento') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

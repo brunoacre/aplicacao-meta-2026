@@ -1,0 +1,92 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo %}Relatórios{% endblock %}
+
+{% block conteudo %}
+<h1 class="h3 mb-3">Relatórios</h1>
+
+<div class="alert alert-info">
+  Operação pesada: prefira exportar fora dos horários de término das atividades,
+  quando os alunos estão enviando o formulário.
+</div>
+
+<section class="mb-5">
+  <h2 class="h5">Consolidado por curso/turma</h2>
+  <p class="text-body-secondary">
+    Planilha com uma aba por curso/turma e uma linha por aluno: matrícula, nome, e-mail,
+    quantidade de atividades e uma coluna por atividade, marcada com "X" quando houve presença.
+  </p>
+  <form method="get" action="{{ url_for('admin.relatorio_consolidado') }}" class="row g-2 align-items-end">
+    <div class="col-12 col-md-5">
+      <label class="form-label" for="consolidado-tipo">Tipo de evento</label>
+      <select class="form-select" id="consolidado-tipo" name="tipo_evento">
+        <option value="">Todos os eventos</option>
+        {% for tipo in tipos %}
+        <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-auto">
+      <button type="submit" class="btn btn-primary">Exportar consolidado por turma</button>
+    </div>
+  </form>
+</section>
+
+<section class="mb-5">
+  <h2 class="h5">Pesquisa por aluno</h2>
+  <form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-12 col-md-5">
+      <label class="form-label" for="pesquisa-termo">Nome ou matrícula</label>
+      <input class="form-control" type="search" id="pesquisa-termo" name="q" value="{{ termo }}">
+    </div>
+    <div class="col-12 col-md-auto">
+      <button type="submit" class="btn btn-primary">Pesquisar aluno</button>
+    </div>
+  </form>
+
+  {% if termo %}
+    {% if alunos %}
+      {% if mais_resultados %}
+      <div class="alert alert-warning">
+        Mostrando os primeiros {{ maximo }} alunos. Refine a pesquisa para ver os demais.
+      </div>
+      {% endif %}
+      {% for aluno in alunos %}
+      <div class="mb-4">
+        <h3 class="h6 mb-1">{{ aluno.nome }}</h3>
+        <p class="text-body-secondary small mb-2">
+          Matrícula {{ aluno.matricula }} · {{ aluno.cursos|sort|join(", ") }} ·
+          {{ aluno.presencas|length }} atividade{{ "s" if aluno.presencas|length != 1 }}
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr><th>Data</th><th>Atividade</th><th>Tipo de evento</th><th>Curso/turma informado</th></tr>
+            </thead>
+            <tbody>
+              {% for resposta in aluno.presencas %}
+              <tr>
+                <td class="text-nowrap">{{ resposta.atividade.data|data }}</td>
+                <td><a href="{{ url_for('admin.atividade_respostas', id=resposta.atividade.id) }}">{{ resposta.atividade.titulo }}</a></td>
+                <td>{{ resposta.atividade.tipo_evento.nome }}</td>
+                <td>{{ resposta.curso_turma.nome }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-body-secondary">Nenhum aluno encontrado para "{{ termo }}".</p>
+    {% endif %}
+  {% endif %}
+</section>
+
+<section>
+  <h2 class="h5">Presença por atividade</h2>
+  <p class="text-body-secondary mb-0">
+    Em <a href="{{ url_for('admin.atividades') }}">Atividades</a>, use o botão "Respostas"
+    para ver e exportar a lista de presença de cada atividade.
+  </p>
+</section>
+{% endblock %}

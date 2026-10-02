@@ -1,0 +1,36 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campos.html" import botao_post %}
+{% block titulo %}Tipos de evento{% endblock %}
+
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h3 mb-0">Tipos de evento</h1>
+  <a class="btn btn-primary" href="{{ url_for('admin.tipo_evento_form') }}">Cadastrar tipo de evento</a>
+</div>
+
+{% if tipos %}
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr><th>Nome</th><th>Situação</th><th class="text-end">Ações</th></tr>
+    </thead>
+    <tbody>
+      {% for tipo in tipos %}
+      <tr class="{{ '' if tipo.ativo else 'text-body-secondary' }}">
+        <td>{{ tipo.nome }}</td>
+        <td>{{ "Ativo" if tipo.ativo else "Inativo" }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.tipo_evento_form', id=tipo.id) }}">Editar</a>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.atividades_qrcodes_pdf', tipo_evento=tipo.id) }}">PDF dos QR Codes</a>
+          {{ botao_post(url_for('admin.tipo_evento_alternar', id=tipo.id),
+                        "Desativar" if tipo.ativo else "Reativar") }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-body-secondary">Nenhum tipo de evento cadastrado.</p>
+{% endif %}
+{% endblock %}

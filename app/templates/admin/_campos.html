@@ -1,0 +1,26 @@
+{# Campo com rótulo, texto de ajuda e erros no padrão do Bootstrap. #}
+{% macro campo(field, classe="mb-3") %}
+<div class="{{ classe }}">
+  {{ field.label(class="form-label") }}
+  {% set css = "form-select" if field.type == "SelectField" else "form-control" %}
+  {{ field(class=css ~ (" is-invalid" if field.errors else ""), **kwargs) }}
+  {% if field.description %}<div class="form-text">{{ field.description }}</div>{% endif %}
+  {% for erro in field.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro caixa(field) %}
+<div class="form-check mb-3">
+  {{ field(class="form-check-input") }}
+  {{ field.label(class="form-check-label") }}
+</div>
+{% endmacro %}
+
+{# Botão POST com CSRF (desativar, reativar, excluir). #}
+{% macro botao_post(url, texto, classe="btn-outline-secondary", confirmar=None) %}
+<form method="post" action="{{ url }}" class="d-inline"
+      {% if confirmar %}onsubmit="return confirm('{{ confirmar }}')"{% endif %}>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="btn btn-sm {{ classe }}">{{ texto }}</button>
+</form>
+{% endmacro %}

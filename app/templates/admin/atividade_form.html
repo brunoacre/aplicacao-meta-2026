@@ -1,0 +1,54 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campos.html" import campo %}
+{% block titulo %}{{ "Editar atividade" if atividade.id else "Cadastrar atividade" }}{% endblock %}
+
+{% block conteudo %}
+<h1 class="h3 mb-3">{{ "Editar atividade" if atividade.id else "Cadastrar atividade" }}</h1>
+
+{% if not form.tipo_evento_id.choices %}
+<div class="alert alert-warning" role="alert">
+  Nenhum tipo de evento ativo. <a href="{{ url_for('admin.tipo_evento_form') }}">Cadastre um tipo de evento</a> antes de cadastrar atividades.
+</div>
+{% endif %}
+
+<form method="post" novalidate class="formulario-admin">
+  {{ form.hidden_tag() }}
+  <div class="row g-3 mb-3">
+    {{ campo(form.tipo_evento_id, classe="col-12 col-sm-6") }}
+    {{ campo(form.modalidade, classe="col-12 col-sm-6") }}
+  </div>
+  {{ campo(form.titulo) }}
+  <div class="row g-3 mb-3">
+    {{ campo(form.data, classe="col-12 col-sm-4") }}
+    {{ campo(form.hora_inicio, classe="col-6 col-sm-4") }}
+    {{ campo(form.hora_fim, classe="col-6 col-sm-4") }}
+  </div>
+  {{ campo(form.local) }}
+  {{ campo(form.envolvidos, rows=3) }}
+  {{ campo(form.fecha_em) }}
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">{{ "Salvar alterações" if atividade.id else "Cadastrar atividade" }}</button>
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.atividades') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Sugere "fecha em" às 23h59 do dia da atividade (RN02) enquanto o
+  // administrador não escolher outro valor.
+  (function () {
+    var data = document.getElementById("data");
+    var fecha = document.getElementById("fecha_em");
+    function sugestao() { return data.value ? data.value + "T23:59" : ""; }
+    var acompanhar = !fecha.value || fecha.value === sugestao();
+    if (acompanhar) { fecha.value = sugestao(); }
+    fecha.addEventListener("input", function () {
+      acompanhar = !fecha.value || fecha.value === sugestao();
+    });
+    data.addEventListener("change", function () {
+      if (acompanhar) { fecha.value = sugestao(); }
+    });
+  })();
+</script>
+{% endblock %}

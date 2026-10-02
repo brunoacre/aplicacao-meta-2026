@@ -1,0 +1,16 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campos.html" import campo, caixa %}
+{% block titulo %}{{ "Editar curso/turma" if curso.id else "Cadastrar curso/turma" }}{% endblock %}
+
+{% block conteudo %}
+<h1 class="h3 mb-3">{{ "Editar curso/turma" if curso.id else "Cadastrar curso/turma" }}</h1>
+<form method="post" novalidate class="formulario-admin">
+  {{ form.hidden_tag() }}
+  {{ campo(form.nome) }}
+  {{ caixa(form.ativo) }}
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">{{ "Salvar alterações" if curso.id else "Cadastrar curso/turma" }}</button>
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.cursos_turmas') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

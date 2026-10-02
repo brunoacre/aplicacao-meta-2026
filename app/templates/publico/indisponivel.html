@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% set titulos = {
+  "nao_aberto": "Formulário ainda não aberto",
+  "encerrado": "Prazo encerrado",
+  "duplicada": "Presença já registrada",
+} %}
+{% block titulo %}{{ titulos[situacao] }}{% endblock %}
+
+{% block conteudo %}
+<div class="conteudo-publico">
+  {% include "publico/_info_atividade.html" %}
+  <h2 class="h5">{{ titulos[situacao] }}</h2>
+  {% if situacao == "nao_aberto" %}
+    <p>O formulário de presença abre em {{ abre_em|data }} às {{ abre_em|hora_h }}.</p>
+  {% elif situacao == "encerrado" %}
+    <p>O prazo para registrar presença nesta atividade terminou em
+       {{ atividade.fecha_em|data }} às {{ atividade.fecha_em|hora_h }}.</p>
+  {% else %}
+    <p>Sua presença nesta atividade já foi registrada. Não é preciso enviar de novo.</p>
+  {% endif %}
+</div>
+{% endblock %}

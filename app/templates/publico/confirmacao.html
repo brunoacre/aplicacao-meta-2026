@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Presença registrada{% endblock %}
+
+{% block conteudo %}
+<div class="conteudo-publico">
+  {% include "publico/_info_atividade.html" %}
+  <div class="alert alert-success" role="alert">Presença registrada com sucesso.</div>
+
+  <h2 class="h5">Resumo do registro</h2>
+  <dl class="row mb-0">
+    <dt class="col-sm-4">Nome</dt><dd class="col-sm-8">{{ form.nome.data }}</dd>
+    <dt class="col-sm-4">Matrícula</dt><dd class="col-sm-8">{{ matricula }}</dd>
+    <dt class="col-sm-4">Curso/turma</dt><dd class="col-sm-8">{{ curso }}</dd>
+    <dt class="col-sm-4">E-mail</dt><dd class="col-sm-8 text-break">{{ form.email.data }}</dd>
+    <dt class="col-sm-4">Enviado em</dt><dd class="col-sm-8">{{ enviado_em|data }} às {{ enviado_em|hora_h }}</dd>
+    <dt class="col-sm-4">Descrição</dt><dd class="col-sm-8" style="white-space: pre-line">{{ form.descricao.data }}</dd>
+  </dl>
+</div>
+{% endblock %}

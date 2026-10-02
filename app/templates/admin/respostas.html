@@ -1,0 +1,50 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo %}Respostas{% endblock %}
+
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <div class="text-body-secondary small">{{ atividade.tipo_evento.nome }}</div>
+    <h1 class="h3 mb-1">{{ atividade.titulo }}</h1>
+    <div class="text-body-secondary">
+      {{ atividade.data|data }}, das {{ atividade.hora_inicio|hora_h }} às {{ atividade.hora_fim|hora_h }}
+      {% if atividade.local %} · {{ atividade.local }}{% endif %}
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if respostas %}
+    <a class="btn btn-primary" href="{{ url_for('admin.atividade_respostas_xlsx', id=atividade.id) }}">Exportar XLSX</a>
+    {% endif %}
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.atividades') }}">Voltar para atividades</a>
+  </div>
+</div>
+
+<p class="text-body-secondary small">
+  {{ respostas|length }} resposta{{ "s" if respostas|length != 1 }}. As respostas são
+  somente para consulta e não podem ser editadas nem excluídas.
+</p>
+
+{% if respostas %}
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-top">
+    <thead>
+      <tr><th>Nome</th><th>Matrícula</th><th>Curso/turma</th><th>E-mail</th><th>Descrição</th><th>Enviado em</th></tr>
+    </thead>
+    <tbody>
+      {% for r in respostas %}
+      <tr>
+        <td>{{ r.nome }}</td>
+        <td class="text-nowrap">{{ r.matricula }}</td>
+        <td>{{ r.curso_turma.nome }}</td>
+        <td>{{ r.email }}</td>
+        <td class="text-break col-descricao">{{ r.descricao }}</td>
+        <td class="text-nowrap">{{ r.enviado_em|data_hora }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-body-secondary">Nenhuma resposta registrada para esta atividade.</p>
+{% endif %}
+{% endblock %}

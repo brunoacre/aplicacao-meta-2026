@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Registrar presença{% endblock %}
+
+{% macro campo(field) %}
+<div class="mb-3">
+  {{ field.label(class="form-label") }}
+  {% set css = "form-select" if field.type == "SelectField" else "form-control" %}
+  {{ field(class=css ~ (" is-invalid" if field.errors else ""), **kwargs) }}
+  {{ caller() if caller }}
+  {% for erro in field.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+</div>
+{% endmacro %}
+
+{% block conteudo %}
+<div class="conteudo-publico">
+  {% include "publico/_info_atividade.html" %}
+
+  <p class="aviso-prazo">
+    {% if atividade.fecha_em.date() == momento.date() %}
+      Formulário disponível até hoje às {{ atividade.fecha_em|hora_h }}.
+    {% else %}
+      Formulário disponível até {{ atividade.fecha_em|data }} às {{ atividade.fecha_em|hora_h }}.
+    {% endif %}
+  </p>
+
+  {% if aviso %}<div class="alert alert-warning" role="alert">{{ aviso }}</div>{% endif %}
+
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ campo(form.nome, autocomplete="name") }}
+    {{ campo(form.matricula, autocomplete="off") }}
+    {{ campo(form.curso_turma_id) }}
+    {{ campo(form.email, type="email", autocomplete="email") }}
+    {% call campo(form.descricao, rows=5, maxlength=maximo, aria_describedby="contador-descricao") %}
+      <div id="contador-descricao" class="contador-caracteres" data-minimo="{{ minimo }}" aria-live="polite">
+        Mínimo de {{ minimo }} caracteres.
+      </div>
+    {% endcall %}
+
+    <p class="small text-body-secondary">
+      Os dados informados serão usados apenas para registrar sua presença e para a emissão de
+      certificados ou comprovação de participação no evento.
+    </p>
+    <button type="submit" class="btn btn-primary w-100">Registrar presença</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // RN06: contador de caracteres da descrição (o servidor também valida).
+  (function () {
+    var campo = document.getElementById("descricao");
+    var contador = document.getElementById("contador-descricao");
+    var minimo = parseInt(contador.dataset.minimo, 10);
+    function atualizar() {
+      var total = campo.value.trim().length;
+      contador.textContent = total + "/" + minimo + " caracteres" +
+        (total >= minimo ? "" : " (faltam " + (minimo - total) + ")");
+      contador.classList.toggle("ok", total >= minimo);
+    }
+    campo.addEventListener("input", atualizar);
+    atualizar();
+  })();
+</script>
+{% endblock %}

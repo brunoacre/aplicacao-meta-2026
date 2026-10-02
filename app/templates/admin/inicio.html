@@ -1,0 +1,7 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo %}Início{% endblock %}
+
+{% block conteudo %}
+<h1 class="h3 mb-3">Olá, {{ current_user.nome }}</h1>
+<p>Use o menu para gerenciar os eventos e as atividades.</p>
+{% endblock %}

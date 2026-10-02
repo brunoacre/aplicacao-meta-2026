@@ -1,0 +1,93 @@
+:root {
+  --cor-azul: #1F4E79;
+  --cor-azul-escuro: #173D60;
+  --cor-azul-suave: #EEF3F8;
+  --cor-cinza-texto: #2F3A45;
+  --cor-cinza-apoio: #6B7785;
+  --cor-cinza-borda: #DDE2E8;
+  --cor-laranja: #D9822B;
+
+  --bs-body-bg: #FFFFFF;
+  --bs-body-color: var(--cor-cinza-texto);
+  --bs-body-font-family: "Source Sans 3", "Segoe UI", Roboto, Arial, sans-serif;
+  --bs-border-color: var(--cor-cinza-borda);
+  --bs-link-color-rgb: 31, 78, 121;
+  --bs-link-hover-color-rgb: 23, 61, 96;
+}
+
+h1, h2, h3 { color: var(--cor-azul); font-weight: 600; }
+
+.site-header {
+  background: #FFFFFF;
+  border-bottom: 3px solid var(--cor-laranja);
+  padding: 0.85rem 0;
+}
+.marca { display: flex; flex-direction: column; line-height: 1.25; }
+.marca-instituicao { color: var(--cor-azul); font-weight: 700; font-size: 1.1rem; }
+.marca-sistema { color: var(--cor-cinza-apoio); font-size: 0.95rem; }
+
+.site-footer {
+  border-top: 1px solid var(--cor-cinza-borda);
+  color: var(--cor-cinza-apoio);
+  font-size: 0.875rem;
+  padding: 1.25rem 0;
+}
+.site-footer p { margin: 0.15rem 0; }
+.site-footer a { color: var(--cor-cinza-apoio); }
+
+.btn-primary {
+  --bs-btn-bg: var(--cor-azul);
+  --bs-btn-border-color: var(--cor-azul);
+  --bs-btn-hover-bg: var(--cor-azul-escuro);
+  --bs-btn-hover-border-color: var(--cor-azul-escuro);
+  --bs-btn-active-bg: var(--cor-azul-escuro);
+  --bs-btn-active-border-color: var(--cor-azul-escuro);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--cor-azul);
+  --bs-btn-border-color: var(--cor-azul);
+  --bs-btn-hover-bg: var(--cor-azul);
+  --bs-btn-hover-border-color: var(--cor-azul);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--cor-azul);
+  box-shadow: 0 0 0 0.2rem rgba(31, 78, 121, 0.2);
+}
+
+/* Área pública: coluna única e estreita */
+.conteudo-publico { max-width: 640px; margin: 0 auto; }
+
+/* Bloco com título, data, horário e local da atividade */
+.info-atividade {
+  background: var(--cor-azul-suave);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Aviso "Formulário disponível até hoje às 23h59" */
+.aviso-prazo {
+  border-left: 3px solid var(--cor-laranja);
+  padding: 0.5rem 0.9rem;
+  color: var(--cor-cinza-texto);
+  margin-bottom: 1.5rem;
+}
+
+.contador-caracteres { color: var(--cor-cinza-apoio); font-size: 0.875rem; }
+.contador-caracteres.ok { color: var(--cor-azul); }
+
+/* Menu da área do administrador */
+.nav-admin {
+  --bs-navbar-color: var(--cor-cinza-texto);
+  --bs-navbar-hover-color: var(--cor-azul);
+  --bs-navbar-active-color: var(--cor-azul);
+}
+.nav-admin .btn-link { text-decoration: none; }
+
+/* Formulários do administrador: largura confortável no computador */
+.formulario-admin { max-width: 720px; }
+
+/* Relatório de respostas: descrição com largura mínima legível */
+.col-descricao { min-width: 18rem; }

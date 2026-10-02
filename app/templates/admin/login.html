@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+
+{% block conteudo %}
+<div class="conteudo-publico">
+  <h1 class="h3 mb-4">Acesso do administrador</h1>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {% for campo, tipo, autocomplete in [(form.email, 'email', 'username'), (form.senha, 'password', 'current-password')] %}
+    <div class="mb-3">
+      {{ campo.label(class="form-label") }}
+      {{ campo(class="form-control" + (" is-invalid" if campo.errors else ""), type=tipo, autocomplete=autocomplete) }}
+      {% for erro in campo.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+  </form>
+</div>
+{% endblock %}

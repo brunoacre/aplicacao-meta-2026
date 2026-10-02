@@ -1,0 +1,90 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campos.html" import botao_post %}
+{% block titulo %}Atividades{% endblock %}
+
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h3 mb-0">Atividades</h1>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.atividades_qrcodes_pdf', **request.args) }}">Gerar PDF dos QR Codes</a>
+    <a class="btn btn-primary" href="{{ url_for('admin.atividade_form') }}">Cadastrar atividade</a>
+  </div>
+</div>
+<p class="text-body-secondary small">
+  O PDF traz uma página por atividade, conforme os filtros abaixo. Operação pesada:
+  gere fora dos horários de término das atividades.
+</p>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-12 col-md-4">
+    <label class="form-label" for="filtro-tipo">Tipo de evento</label>
+    <select class="form-select" id="filtro-tipo" name="tipo_evento">
+      <option value="">Todos</option>
+      {% for tipo in tipos %}
+      <option value="{{ tipo.id }}" {% if filtros.tipo_evento_id == tipo.id %}selected{% endif %}>{{ tipo.nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-3">
+    <label class="form-label" for="filtro-data">Data</label>
+    <input class="form-control" type="date" id="filtro-data" name="data"
+           value="{{ filtros.data.isoformat() if filtros.data else '' }}">
+  </div>
+  <div class="col-6 col-md-3">
+    <label class="form-label" for="filtro-modalidade">Modalidade</label>
+    <select class="form-select" id="filtro-modalidade" name="modalidade">
+      <option value="">Todas</option>
+      {% for valor, rotulo in modalidades.items() %}
+      <option value="{{ valor }}" {% if filtros.modalidade == valor %}selected{% endif %}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-2 d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.atividades') }}">Limpar</a>
+  </div>
+</form>
+
+{% if atividades %}
+<p class="text-body-secondary small">{{ atividades|length }} atividade{{ "s" if atividades|length != 1 }}</p>
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr>
+        <th>Data</th><th>Horário</th><th>Título</th><th>Tipo de evento</th>
+        <th>Modalidade</th><th>Local</th><th>Fecha em</th><th class="text-end">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for atividade in atividades %}
+      <tr>
+        <td class="text-nowrap">{{ atividade.data|data }}</td>
+        <td class="text-nowrap">{{ atividade.hora_inicio|hora }}–{{ atividade.hora_fim|hora }}</td>
+        <td>{{ atividade.titulo }}</td>
+        <td class="text-nowrap">{{ atividade.tipo_evento.nome }}</td>
+        <td>{{ atividade.modalidade_rotulo }}</td>
+        <td>{{ atividade.local }}</td>
+        <td class="text-nowrap">{{ atividade.fecha_em|data_hora }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.atividade_form', id=atividade.id) }}">Editar</a>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.atividade_qrcode', id=atividade.id) }}">QR Code</a>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.atividade_respostas', id=atividade.id) }}">Respostas</a>
+          {% if atividade.id in com_respostas %}
+          <span class="d-inline-block" tabindex="0" title="Atividade com respostas: apenas edição">
+            <button type="button" class="btn btn-sm btn-outline-danger" disabled>Excluir</button>
+          </span>
+          {% else %}
+          {{ botao_post(url_for('admin.atividade_excluir', id=atividade.id), "Excluir",
+                        classe="btn-outline-danger",
+                        confirmar="Excluir esta atividade? Esta ação não pode ser desfeita.") }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-body-secondary">Nenhuma atividade encontrada.</p>
+{% endif %}
+{% endblock %}

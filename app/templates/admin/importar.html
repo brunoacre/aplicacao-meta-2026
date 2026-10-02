@@ -1,0 +1,27 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campos.html" import campo %}
+{% block titulo %}Importar planilha{% endblock %}
+
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h3 mb-0">Importar planilha</h1>
+  <a class="btn btn-outline-primary" href="{{ url_for('admin.importar_modelo') }}">Baixar modelo</a>
+</div>
+
+<div class="alert alert-info">
+  Operação pesada: prefira importar fora dos horários de término das atividades,
+  quando os alunos estão enviando o formulário.
+</div>
+
+<p>
+  Envie uma planilha .xlsx com uma atividade por linha, no formato do modelo.
+  Antes de gravar, você verá uma pré-visualização com as linhas válidas e os erros
+  encontrados. Tipos de evento que ainda não existem são criados automaticamente.
+</p>
+
+<form method="post" enctype="multipart/form-data" novalidate class="formulario-admin">
+  {{ form.hidden_tag() }}
+  {{ campo(form.arquivo, accept=".xlsx") }}
+  <button type="submit" class="btn btn-primary">Ver pré-visualização</button>
+</form>
+{% endblock %}

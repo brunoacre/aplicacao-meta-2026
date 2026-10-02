@@ -1,0 +1,83 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo %}Pré-visualização da importação{% endblock %}
+
+{% block conteudo %}
+{% set validas = resultado.validas %}
+{% set com_erro = resultado.com_erro %}
+<h1 class="h3 mb-3">Pré-visualização da importação</h1>
+
+<p>
+  <strong>{{ validas|length }}</strong> linha{{ "s" if validas|length != 1 }} válida{{ "s" if validas|length != 1 }}
+  e <strong>{{ com_erro|length }}</strong> com erro.
+  {% if com_erro %}Apenas as linhas válidas serão importadas.{% endif %}
+</p>
+
+<div class="d-flex gap-2 flex-wrap mb-4">
+  {% if validas %}
+  <form method="post" action="{{ url_for('admin.importar_confirmar') }}">
+    {{ form.hidden_tag() }}
+    <button type="submit" class="btn btn-primary">
+      Importar {{ validas|length }} atividade{{ "s" if validas|length != 1 }} válida{{ "s" if validas|length != 1 }}
+    </button>
+  </form>
+  {% endif %}
+  <a class="btn btn-outline-primary" href="{{ url_for('admin.importar') }}">Enviar outra planilha</a>
+</div>
+
+{% if com_erro %}
+<h2 class="h5">Linhas com erro</h2>
+<div class="table-responsive mb-4">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr><th>Linha</th><th>Tipo de evento</th><th>Atividade</th><th>Motivo</th></tr>
+    </thead>
+    <tbody>
+      {% for linha in com_erro %}
+      <tr>
+        <td>{{ linha.numero }}</td>
+        <td>{{ linha.valores.tipo_evento }}</td>
+        <td>{{ linha.valores.atividade }}</td>
+        <td>
+          <ul class="mb-0 ps-3">
+            {% for erro in linha.erros %}<li>{{ erro }}</li>{% endfor %}
+          </ul>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if validas %}
+<h2 class="h5">Linhas válidas</h2>
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr>
+        <th>Linha</th><th>Tipo de evento</th><th>Atividade</th><th>Modalidade</th>
+        <th>Data</th><th>Horário</th><th>Local</th><th>Envolvidos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in validas %}
+      {% set d = linha.dados %}
+      <tr>
+        <td>{{ linha.numero }}</td>
+        <td>
+          {{ d.tipo_evento }}
+          {% if linha.novo_tipo %}<span class="badge text-bg-secondary">novo</span>{% endif %}
+        </td>
+        <td>{{ d.titulo }}</td>
+        <td>{{ modalidades[d.modalidade] }}</td>
+        <td class="text-nowrap">{{ d.data|data }}</td>
+        <td class="text-nowrap">{{ d.hora_inicio|hora }}–{{ d.hora_fim|hora }}</td>
+        <td>{{ d.local }}</td>
+        <td>{{ d.envolvidos }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
