@@ -8,19 +8,18 @@
   </button>
   <div class="collapse navbar-collapse" id="menu-admin">
     <ul class="navbar-nav ms-auto align-items-lg-center">
-      {# Itens com "#" serão ligados nas próximas etapas. #}
       {% set ep = request.endpoint or "" %}
       {% for prefixo, rota, rotulo in [("admin.atividade", "admin.atividades", "Atividades"),
                                        ("admin.tipo", "admin.tipos_evento", "Tipos de evento"),
                                        ("admin.curso", "admin.cursos_turmas", "Cursos/turmas"),
                                        ("admin.importar", "admin.importar", "Importar planilha"),
-                                       ("admin.relatorio", "admin.relatorios_inicio", "Relatórios")] %}
+                                       ("admin.relatorio", "admin.relatorios_inicio", "Relatórios"),
+                                       ("admin.administrador", "admin.administradores", "Administradores")] %}
       <li class="nav-item">
         <a class="nav-link{{ ' active' if ep.startswith(prefixo) }}" href="{{ url_for(rota) }}"
            {% if ep.startswith(prefixo) %}aria-current="page"{% endif %}>{{ rotulo }}</a>
       </li>
       {% endfor %}
-      <li class="nav-item"><a class="nav-link" href="#">Administradores</a></li>
       <li class="nav-item">
         <form method="post" action="{{ url_for('admin.sair') }}" class="d-inline">
           {{ form_sair.hidden_tag() }}

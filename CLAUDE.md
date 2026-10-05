@@ -89,3 +89,9 @@ requirements.txt
   - [x] A3. Remover `hora_fim` (cadastro, importação, planilha modelo, telas e PDF);
     formulário abre à 00h00 da data. Banco em produção: rodar
     `flask --app wsgi atualizar-banco` após backup.
+- [x] 9. Alterações após a implantação (SPEC seção 11)
+  - [x] A4. Botão "QR Code" da listagem gera PDF de uma página (mesmo layout do
+    PDF em lote); download PNG removido.
+  - [x] A5. Tela de administradores (RF16): cadastrar, redefinir senha e
+    desativar/reativar; ninguém desativa a si mesmo; desativado perde a sessão.
+    Regras em `servicos/administradores.py`, usadas também pelo `criar-admin`.

@@ -12,7 +12,7 @@ from wtforms import (
     TextAreaField,
     TimeField,
 )
-from wtforms.validators import DataRequired, Length, Optional, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Length, Optional, ValidationError
 
 from ..formularios import FormularioBase
 from ..models import MODALIDADES
@@ -69,6 +69,20 @@ class AtividadeForm(FormularioBase):
             if campo.data <= datetime.combine(self.data.data, time.min):
                 raise ValidationError(
                     "O fechamento deve ser depois do início do dia da atividade.")
+
+
+class SenhaForm(FormularioBase):
+    senha = PasswordField("Senha", validators=[DataRequired("Informe a senha.")],
+                          description="Pelo menos 8 caracteres.")
+    confirmacao = PasswordField("Repita a senha", validators=[
+        DataRequired("Repita a senha."), EqualTo("senha", "As senhas não conferem.")])
+
+
+class AdministradorForm(SenhaForm):
+    nome = StringField("Nome", validators=[
+        DataRequired("Informe o nome."), Length(max=120)])
+    email = StringField("E-mail", validators=[
+        DataRequired("Informe o e-mail."), Length(max=120)])
 
 
 class ImportarPlanilhaForm(FormularioBase):

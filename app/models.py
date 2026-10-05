@@ -38,7 +38,9 @@ class Administrador(UserMixin, db.Model):
 
 @login_manager.user_loader
 def carregar_administrador(id_admin):
-    return db.session.get(Administrador, int(id_admin))
+    # Administrador desativado perde o acesso já na próxima requisição.
+    admin = db.session.get(Administrador, int(id_admin))
+    return admin if admin and admin.ativo else None
 
 
 class TipoEvento(db.Model):

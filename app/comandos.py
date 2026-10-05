@@ -4,8 +4,7 @@ import click
 from sqlalchemy import inspect, text
 
 from . import db
-from .models import Administrador
-from .servicos.validacao import SENHA_MINIMA, email_valido, normalizar_email
+from .servicos import administradores
 
 
 def registrar_comandos(app):
@@ -17,26 +16,11 @@ def registrar_comandos(app):
     )
     def criar_admin(nome, email, senha):
         """Cria um administrador."""
-        nome = nome.strip()
-        email = normalizar_email(email)
-        if not nome:
-            raise click.ClickException("Informe o nome.")
-        if not email_valido(email):
-            raise click.ClickException("E-mail inválido.")
-        if len(senha) < SENHA_MINIMA:
-            raise click.ClickException(
-                f"A senha deve ter pelo menos {SENHA_MINIMA} caracteres."
-            )
-        if db.session.execute(
-            db.select(Administrador).filter_by(email=email)
-        ).scalar_one_or_none():
-            raise click.ClickException("Já existe um administrador com este e-mail.")
-
-        admin = Administrador(nome=nome, email=email)
-        admin.definir_senha(senha)
-        db.session.add(admin)
-        db.session.commit()
-        click.echo(f"Administrador {email} criado.")
+        try:
+            admin = administradores.criar(nome, email, senha)
+        except administradores.ErroAdministrador as erro:
+            raise click.ClickException(erro.mensagem) from erro
+        click.echo(f"Administrador {admin.email} criado.")
 
     @app.cli.command("atualizar-banco")
     def atualizar_banco():

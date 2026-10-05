@@ -39,7 +39,7 @@ dependências que exijam configuração especial no servidor.
 - **Administrador**: faz login. Todos os administradores têm o mesmo nível de acesso.
   - O primeiro administrador é criado por comando de linha: `flask criar-admin`.
   - Depois disso, qualquer administrador pode cadastrar, desativar e redefinir a senha
-    de outros administradores pela interface.
+    de outros administradores pela interface (RF16).
 
 ## 3. Requisitos funcionais
 
@@ -65,7 +65,9 @@ dependências que exijam configuração especial no servidor.
   - linhas com erro são listadas com o motivo; o administrador confirma a importação
     apenas das linhas válidas;
   - tipo de evento inexistente é criado automaticamente na importação.
-- **RF07 – QR Code individual**: baixar a imagem PNG do QR Code de uma atividade.
+- **RF07 – QR Code individual** (A4): o botão de cada atividade na listagem baixa um
+  PDF de uma página A4, no mesmo formato do RF08 (evento, título, data e QR Code).
+  Não há download da imagem PNG.
 - **RF08 – Folha de QR Codes em PDF** (A1): gerar um PDF com as atividades filtradas
   (ex.: todas de um evento), uma atividade por página A4. Cada página traz, de cima
   para baixo: nome do evento (ex.: "35ª META 2026"), título da atividade (ex.:
@@ -83,6 +85,11 @@ dependências que exijam configuração especial no servidor.
   exibe as atividades em que o aluno registrou presença, com data e tipo de evento.
 - **RF12 – Visualização de respostas**: o administrador pode ver as respostas de cada
   atividade, mas **não pode editá-las nem excluí-las**.
+- **RF16 – Administradores** (A5): listar (nome, e-mail, situação), cadastrar (nome,
+  e-mail único, senha com no mínimo 8 caracteres e confirmação), redefinir a senha e
+  desativar/reativar. Não há edição de nome/e-mail nem exclusão. O administrador logado
+  não pode desativar a si mesmo, e quem é desativado perde o acesso na próxima
+  requisição.
 
 ### Área pública (aluno)
 
@@ -388,7 +395,8 @@ h1, h2, h3 { color: var(--cor-azul); font-weight: 600; }
 5. Importação de planilha com pré-visualização.
 6. Relatórios e pesquisa por aluno.
 7. README e ajustes para o PythonAnywhere.
-8. Alterações após a implantação (seção 11).
+8. Alterações após a implantação (seção 11, A1–A3).
+9. Alterações após a implantação (seção 11, A4–A5).
 
 ## 11. Alterações após a implantação
 
@@ -414,3 +422,9 @@ lista registra o que mudou em relação à versão implantada.
     `flask --app wsgi atualizar-banco` remove a coluna (`ALTER TABLE ... DROP
     COLUMN`); é idempotente e deve ser rodado após o `git pull`, depois de uma cópia
     de segurança do banco. O README documenta esse passo.
+- **A4 – QR Code individual em PDF (RF07)**: o botão "QR Code" de cada atividade passa
+  a gerar um PDF de uma página, igual às páginas do RF08, em vez da imagem PNG. A rota
+  da imagem PNG foi removida.
+- **A5 – Tela de administradores (RF16)**: a gestão prevista na seção 2 passa a existir
+  na interface (cadastrar, redefinir senha, desativar/reativar). O comando
+  `flask criar-admin` usa as mesmas regras.

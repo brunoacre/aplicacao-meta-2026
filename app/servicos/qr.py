@@ -1,6 +1,4 @@
-"""QR Code de cada atividade (RF07), apontando para o formulário público (RN08)."""
-from io import BytesIO
-
+"""QR Code de cada atividade, apontando para o formulário público (RN08)."""
 import qrcode
 from flask import current_app, url_for
 from qrcode.constants import ERROR_CORRECT_M
@@ -25,9 +23,3 @@ def gerar_imagem(atividade, box_size=10):
     codigo.make(fit=True)
     return codigo.make_image(fill_color="black", back_color="white").get_image()
 
-
-def gerar_png(atividade):
-    saida = BytesIO()
-    gerar_imagem(atividade).save(saida, format="PNG")
-    saida.seek(0)
-    return saida

@@ -1,4 +1,4 @@
-"""Folha de QR Codes em PDF (RF08): uma atividade por página, em A4."""
+"""PDF de QR Codes (RF07 e RF08): uma atividade por página, em A4."""
 from io import BytesIO
 from xml.sax.saxutils import escape
 
@@ -75,6 +75,11 @@ def gerar_pdf(atividades):
     canvas.save()
     saida.seek(0)
     return saida
+
+
+def nome_arquivo_atividade(atividade):
+    """Ex.: qrcode-palestra-de-abertura.pdf (título limitado a 60 caracteres)."""
+    return f"qrcode-{slug(atividade.titulo, 'atividade')[:60].strip('-')}.pdf"
 
 
 def nome_arquivo(tipo_evento=None):

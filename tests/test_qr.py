@@ -1,9 +1,7 @@
 import re
 from datetime import date, time
-from io import BytesIO
 
 import pytest
-from PIL import Image
 
 from app import db
 from app.models import Atividade, TipoEvento
@@ -32,7 +30,7 @@ def _paginas(pdf_bytes):
 
 # --- acesso ------------------------------------------------------------------
 
-@pytest.mark.parametrize("url", ["/admin/atividades/1/qrcode.png", "/admin/atividades/qrcodes.pdf"])
+@pytest.mark.parametrize("url", ["/admin/atividades/1/qrcode.pdf", "/admin/atividades/qrcodes.pdf"])
 def test_rotas_exigem_login(client, url):
     resposta = client.get(url)
     assert resposta.status_code == 302
@@ -60,19 +58,24 @@ def test_url_publica_sem_configuracao_usa_a_requisicao(app):
 
 # --- QR Code individual ------------------------------------------------------
 
-def test_baixar_png(app, cliente_logado):
-    id_, _ = _criar(app)
-    resposta = cliente_logado.get(f"/admin/atividades/{id_}/qrcode.png")
+def test_baixar_pdf_individual(app, cliente_logado):
+    # A4: o botão de cada atividade baixa um PDF de uma página.
+    id_, _ = _criar(app, titulo="Palestra de abertura")
+    resposta = cliente_logado.get(f"/admin/atividades/{id_}/qrcode.pdf")
     assert resposta.status_code == 200
-    assert resposta.mimetype == "image/png"
-    assert f"qrcode-atividade-{id_}.png" in resposta.headers["Content-Disposition"]
-    imagem = Image.open(BytesIO(resposta.data))
-    assert imagem.format == "PNG"
-    assert imagem.width == imagem.height >= 250
+    assert resposta.mimetype == "application/pdf"
+    assert resposta.data.startswith(b"%PDF")
+    assert _paginas(resposta.data) == 1
+    assert "qrcode-palestra-de-abertura.pdf" in resposta.headers["Content-Disposition"]
 
 
-def test_png_de_atividade_inexistente(cliente_logado):
-    assert cliente_logado.get("/admin/atividades/999/qrcode.png").status_code == 404
+def test_png_nao_existe_mais(app, cliente_logado):
+    id_, _ = _criar(app)
+    assert cliente_logado.get(f"/admin/atividades/{id_}/qrcode.png").status_code == 404
+
+
+def test_pdf_de_atividade_inexistente(cliente_logado):
+    assert cliente_logado.get("/admin/atividades/999/qrcode.pdf").status_code == 404
 
 
 # --- PDF ---------------------------------------------------------------------
@@ -127,7 +130,7 @@ def test_nome_do_arquivo(nome, arquivo):
 def test_listagens_mostram_os_botoes(app, cliente_logado):
     id_, tipo_id = _criar(app)
     texto = cliente_logado.get("/admin/atividades").get_data(as_text=True)
-    assert f"/admin/atividades/{id_}/qrcode.png" in texto
+    assert f"/admin/atividades/{id_}/qrcode.pdf" in texto
     assert "Gerar PDF dos QR Codes" in texto
     texto = cliente_logado.get("/admin/tipos-evento").get_data(as_text=True)
     assert f"/admin/atividades/qrcodes.pdf?tipo_evento={tipo_id}" in texto

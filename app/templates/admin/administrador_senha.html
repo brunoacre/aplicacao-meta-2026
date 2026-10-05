@@ -1,0 +1,17 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campos.html" import campo %}
+{% block titulo %}Redefinir senha{% endblock %}
+
+{% block conteudo %}
+<h1 class="h3 mb-1">Redefinir senha</h1>
+<p class="text-body-secondary mb-3">{{ admin.nome }} ({{ admin.email }})</p>
+<form method="post" novalidate class="formulario-admin">
+  {{ form.hidden_tag() }}
+  {{ campo(form.senha, autocomplete="new-password") }}
+  {{ campo(form.confirmacao, autocomplete="new-password") }}
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Redefinir senha</button>
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.administradores') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
